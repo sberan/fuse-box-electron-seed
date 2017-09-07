@@ -46,23 +46,29 @@ Sparky.task("build", () => {
         // Configure development server
         fuse.dev({ root: false }, server => {
             const dist = path.join(__dirname, "dist");
-            const app = server.httpServer.app;
-            app.use("/static/", express.static(path.join(dist, 'static')));
-            app.get("*", function(req, res) {
+            const serverApp = server.httpServer.app;
+            serverApp.use("/static/", express.static(path.join(dist, 'static')));
+            serverApp.get("*", function(req, res) {
                 res.sendFile(path.join(dist, "static/index.html"));
             });
         })
     }
 
-    const app = fuse.bundle("app")
+    const client = fuse.bundle("app")
         .instructions('> [index.ts] + fuse-box-css')
 
+    const server = fuse.bundle("electron")
+            .target("electron")
+            .watch()
+            .instructions(" > [electron.ts]"); // it's import to isolate like this []
+
     if (!production) { 
-        app.hmr().watch()
+        client.hmr().watch()
+        server.watch()
 
         return fuse.run().then(() => {
             // launch electron the app
-            spawn('node', [`${ __dirname }/node_modules/electron/cli.js`,  __dirname ]);
+            spawn('node', [`${ __dirname }/node_modules/electron/cli.js`, __dirname], { stdio: 'inherit' });
         });
     }
 

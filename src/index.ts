@@ -12,7 +12,7 @@ chrome: ${process.versions.chrome}
 electron: ${process.versions.electron}
 `
 
-const test = document.querySelector("#test")
-test.innerHTML = myPackage + versions;
-
-
+const test = document.querySelector("#test");
+if (test) {
+  test.innerHTML = myPackage + versions;
+}
