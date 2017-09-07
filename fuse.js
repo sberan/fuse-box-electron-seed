@@ -12,6 +12,7 @@ const {
 const express = require("express");
 const path = require("path");
 const {spawn} = require("child_process");
+const treeKill = require('tree-kill')
 
 let producer;
 let production = false;
@@ -29,11 +30,11 @@ Sparky.task("build", () => {
             [SassPlugin(), CSSPlugin()],
             WebIndexPlugin({
                 title: "FuseBox electron demo",
-                template: "src/index.html",
+                template: "src/renderer/index.html",
                 path: production ? "." : "/static/"
             }),
             production && QuantumPlugin({
-                bakeApiIntoBundle : 'app',
+                bakeApiIntoBundle : 'main',
                 target : 'electron',
                 treeshake: true,
                 removeExportsInterop: false,
@@ -41,7 +42,6 @@ Sparky.task("build", () => {
             })
         ]
     });
-
     if (!production) {
         // Configure development server
         fuse.dev({ root: false }, server => {
@@ -54,22 +54,22 @@ Sparky.task("build", () => {
         })
     }
 
-    const client = fuse.bundle("app")
-        .instructions('> [index.ts] + fuse-box-css')
+    const renderer = fuse.bundle("renderer")
+        .instructions('> [renderer/index.ts] + fuse-box-css')
 
-    const server = fuse.bundle("electron")
+    const main = fuse.bundle("main")
             .target("electron")
-            .watch()
-            .instructions(" > [electron.ts]"); // it's import to isolate like this []
+            .instructions(" > [main/electron.ts]"); // it's import to isolate like this []
 
     if (!production) { 
-        client.hmr().watch()
-        server.watch()
-
-        return fuse.run().then(() => {
-            // launch electron the app
-            spawn('node', [`${ __dirname }/node_modules/electron/cli.js`, __dirname], { stdio: 'inherit' });
-        });
+        let mainProc;
+        renderer.hmr().watch('renderer/**')
+        main.watch('main/**').completed(() => {
+            if (mainProc) {
+                treeKill(mainProc.pid)
+            }
+            mainProc = spawn('node', [`${ __dirname }/node_modules/electron/cli.js`, __dirname], { stdio: 'inherit' });
+        })
     }
 
     return fuse.run()

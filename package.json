@@ -2,7 +2,7 @@
     "name": "fuse-box-electron-seed",
     "version": "1.0.0",
     "description": "",
-    "main": "dist/static/electron.js",
+    "main": "dist/static/main.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "node fuse",
@@ -24,6 +24,7 @@
         "express": "^4.15.3",
         "fuse-box": "^2.2.31",
         "node-sass": "^4.5.2",
+        "tree-kill": "^1.1.0",
         "typescript": "^2.5.2",
         "uglify-js": "^3.0.27"
     }
